@@ -8,7 +8,7 @@ A powerful desktop application designed to help you download videos and playlist
   java -jar VideoDownloader.jar
   ```
 With Window user, you just need to open **```VideoDownloader.jar```** in your saved directory (after you extracted)
-Eg. C:\Downloads\VideoDownloader\target
+Eg. C:\Downloads\VideoDownloaderWin-v1.0.0\target
 
 ## Sit back, relax and enjoy the momment
 
