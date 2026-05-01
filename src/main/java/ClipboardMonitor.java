@@ -13,7 +13,6 @@ public class ClipboardMonitor implements Runnable {
     public void run() {
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         String lastContent = "";
-        System.out.println("Following your Clipboard. Let copy any video/playlist link address...");
 
         while (true) {
             try {
@@ -22,11 +21,20 @@ public class ClipboardMonitor implements Runnable {
                     
                     if (data != null && !data.equals(lastContent) && (data.startsWith("http") || data.startsWith("https"))) {
                         lastContent = data;
+                        System.out.println("\n[Clipboard] Detected new link: " + data);
                         manager.processLink(data);
                     }
                 }
                 Thread.sleep(1500);
             } catch (Exception e) {
+                // Log error but continue monitoring
+                System.err.println("Clipboard monitoring error: " + e.getMessage());
+                try {
+                    Thread.sleep(5000); // Wait longer on error
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
             }
         }
     }
