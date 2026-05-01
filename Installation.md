@@ -11,14 +11,14 @@ Before running the application, ensure your system meets the following requireme
 ## Step 2: Download the App
 1. Navigate to the **[Releases](../../releases)** page of this repository.
 2. Download the compressed package that matches your Operating System:
-   * **Windows:** Download `VideoDownloader-v1.0.0-Windows.rar`
-   * **macOS:** Download `VideoDownloader-v1.0.0-macOS.tar.gz`
-   * **Linux:** Download `VideoDownloader-v1.0.0-Linux.tar.gz`
+   * **Windows:** Download `VideoDownloaderWin-v1.0.0.zip`
+   * **MacOS:** Download `VideoDownloaderMac-v1.0.0.tar.gz`
+   * **Linux:** Download `VideoDownloaderLinux-v1.0.0.tar.gz`
 
 ## Step 3: Run the Application
 
 ### 🪟 For Windows Users
-1. Extract the downloaded `.rar` archive to a folder of your choice (e.g., `C:\Downloads\VideoDownloader`).
+1. Extract the downloaded `.zip` archive to a folder of your choice (e.g., `C:\Downloads\VideoDownloaderWin-v1.0.0`).
 2. Ensure that `yt-dlp.exe` and `ffmpeg.exe` are located in the exact same folder as the `.jar` file.
 3. Simply **double-click** the `VideoDownloader.jar` file to launch the app!
    *(Troubleshooting: If double-clicking doesn't work, open Command Prompt in that folder and run: `java -jar VideoDownloader.jar`)*
