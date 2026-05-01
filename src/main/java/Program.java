@@ -31,7 +31,6 @@ public class Program {
 					BrowserController.autoSetupExtension();
 				}
 
-				// MENU CHẾ ĐỘ 2 RÕ RÀNG HƠN
 				System.out.println("\n[CATCHING LINK OPTION]");
 				System.out.println("👉 METHOD 1: Enter your link here (YouTube, Facebook, popular video/playlist link...).");
 				System.out.println("👉 METHOD 2: Leave it blank and press ENTER. The app will open Chrome so you can browse the web and find movies..");
