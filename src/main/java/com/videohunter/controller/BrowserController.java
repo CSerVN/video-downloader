@@ -1,11 +1,12 @@
-import javax.swing.JOptionPane;
-
+package com.videohunter.controller;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.swing.JOptionPane;
 
 public class BrowserController {
 
@@ -55,7 +56,7 @@ public class BrowserController {
 			String postMessage = "After you have successfully enabled 'Developer mode',\n"
 					+ "Please check if the 'Video Hunter' extension has appeared.\n\n"
 					+ "If you see it, click OK here to start downloading the video/playlist!";
-			JOptionPane.showMessageDialog(null, postMessage, "Thiết lập bước 2", JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(null, postMessage, "Set up for step 2", JOptionPane.INFORMATION_MESSAGE);
 
 			new File(PROFILE_PATH, "setup_done.txt").createNewFile();
 

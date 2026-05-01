@@ -1,8 +1,9 @@
+package com.videohunter.controller;
 import java.io.File;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.net.URI;
 
 public class DependencyManager {
     
@@ -52,10 +53,17 @@ public class DependencyManager {
                 System.err.println("Can not install yt-dlp: " + e.getMessage());
             }
         } else return;
-        
+        if (ytDlpFile.exists()) {
+			boolean granted = ytDlpFile.setExecutable(true);
+			if (!granted && !os.contains("win")) {
+				System.err.println("Warning: Please help me get yt-dlp permission!");
+			}
+		}
         if (!fFmpegFile.exists()) {
-            System.out.println("Wanning: Not found " + fFmpegName + "!");
+            System.out.println("Warning: Not found " + fFmpegName + "!");
             System.out.println("Audio and video may be separated");
+        } else {
+        	fFmpegFile.setExecutable(true);
         }
     }
 }

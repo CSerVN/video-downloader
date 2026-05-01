@@ -1,38 +1,44 @@
-import com.google.gson.Gson;
+package com.videohunter.controller;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-class NeccessaryToolsAdapter implements DownloadStrategy {
+import com.google.gson.Gson;
+import com.videohunter.model.DownloadStrategy;
+import com.videohunter.model.Observer;
+import com.videohunter.model.VideoInfo;
+
+public class NeccessaryToolsAdapter implements DownloadStrategy {
 	private final Gson gson = new Gson();
 
 	private String getToolPath(String toolType) {
 		String os = System.getProperty("os.name").toLowerCase();
 		String arch = System.getProperty("os.arch").toLowerCase();
+		
 		String dir = System.getProperty("user.dir");
+		try {
+			File jarPath = new File(NeccessaryToolsAdapter.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+			dir = jarPath.getParent();
+		} catch (Exception ignored) {}
+
 		String fileName = "";
 
 		if (toolType.equals("ytdlp")) {
 			if (os.contains("win"))
 				fileName = "yt-dlp.exe";
 			else if (os.contains("mac"))
-				fileName = "yt-dlp_macos";
+				fileName = "yt-dlp-macos";
 			else {
-				if (arch.contains("aarch64") || arch.contains("arm"))
-					fileName = "yt-dlp_linux_aarch64";
-				else
-					fileName = "yt-dlp_linux";
+				fileName = "yt-dlp";
 			}
 		} else if (toolType.equals("ffmpeg")) {
 			if (os.contains("win"))
 				fileName = "ffmpeg.exe";
 			else if (os.contains("mac")) {
-				if (arch.contains("aarch64") || arch.contains("arm"))
-					fileName = "ffmpeg-darwin-arm64";
-				else
-					fileName = "ffmpeg-darwin-x64";
+				fileName = "ffmpeg-macos";
 			} else {
 				if (arch.contains("aarch64") || arch.contains("arm"))
 					fileName = "ffmpeg-linux-arm64";
@@ -46,17 +52,18 @@ class NeccessaryToolsAdapter implements DownloadStrategy {
 	@Override
 	public VideoInfo fetchMetadata(String url) throws Exception {
 		String ytDlpCommand = getToolPath("ytdlp");
-		
+
 		ProcessBuilder pb = new ProcessBuilder(
-		    ytDlpCommand, 
-		    "--extractor-args", "generic:impersonate", 
-		    "-j", 
-		    url
+				ytDlpCommand, 
+				"--extractor-args", "generic:impersonate",
+				"--dump-json", 
+				"--no-warnings",
+				url
 		);
 		Process process = pb.start();
 
 		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-		String jsonOutput = reader.readLine();
+		String firstLine = reader.readLine();
 
 		BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 		StringBuilder errorMsg = new StringBuilder();
@@ -64,9 +71,8 @@ class NeccessaryToolsAdapter implements DownloadStrategy {
 		while ((line = errorReader.readLine()) != null) {
 			errorMsg.append(line).append("\n");
 		}
-
-		if (jsonOutput != null && !jsonOutput.trim().isEmpty()) {
-			return gson.fromJson(jsonOutput, VideoInfo.class);
+		if (firstLine != null && !firstLine.trim().isEmpty()) {
+			return gson.fromJson(firstLine, VideoInfo.class);
 		} else {
 			throw new RuntimeException("Analytics link error: \n" + errorMsg.toString());
 		}
@@ -81,35 +87,42 @@ class NeccessaryToolsAdapter implements DownloadStrategy {
 
 			List<String> commandList = new ArrayList<>();
 			commandList.add(getToolPath("ytdlp"));
-			
+
 			commandList.add("--extractor-args");
 			commandList.add("generic:impersonate");
 			commandList.add("--add-header");
 			commandList.add("Referer: " + url);
 
 			commandList.add("--ffmpeg-location");
-			commandList.add(getToolPath("ffmpeg"));
+			File ffmpegFile = new File(getToolPath("ffmpeg"));
+			commandList.add(ffmpegFile.getParent());
+			
 			commandList.add("-N");
 			commandList.add("16");
-			commandList.add("-o");
-			commandList.add(outputTemplate);
-			commandList.add(url);
 
 			if (format.equalsIgnoreCase("mp4")) {
-				commandList.add(1, "bestvideo+bestaudio/best");
-				commandList.add(1, "-f");
+				commandList.add("-f");
+				commandList.add("bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best");
 				commandList.add("--merge-output-format");
 				commandList.add("mp4");
+				
 			} else if (format.equalsIgnoreCase("mp3")) {
-				commandList.add(1, "bestaudio/best");
-				commandList.add(1, "-f");
+				commandList.add("-f");
+				commandList.add("bestaudio/best");
 				commandList.add("-x");
 				commandList.add("--audio-format");
 				commandList.add("mp3");
-			} else {
-				commandList.add(1, "bestvideo+bestaudio/best");
-				commandList.add(1, "-f");
+				
+			} else { 
+				commandList.add("-f");
+				commandList.add("bestvideo+bestaudio/best");
+				commandList.add("--merge-output-format");
+				commandList.add("mkv");
 			}
+
+			commandList.add("-o");
+			commandList.add(outputTemplate);
+			commandList.add(url);
 
 			ProcessBuilder pb = new ProcessBuilder(commandList);
 			pb.redirectErrorStream(true);
@@ -144,19 +157,39 @@ class NeccessaryToolsAdapter implements DownloadStrategy {
 					System.err.println("\n[yt-dlp log] " + line);
 				}
 			}
-			
+
 			int exitCode = process.waitFor();
-            
+
 			if (exitCode == 0) {
 				System.out.println("\nDownload completed! Save at: " + savePath);
 				o.onComplete(url, savePath);
 			} else {
-				throw new RuntimeException("yt-dlp bị crash (Mã thoát: " + exitCode + ")");
+				throw new RuntimeException("yt-dlp was crashed (Exit code: " + exitCode + ")");
 			}
 
 		} catch (Exception e) {
 			System.err.println("\nError while downloading: " + e.getMessage());
 			o.onError(url, e.getMessage());
 		}
+	}
+	
+	@Override
+	public List<String> extractPlaylistLinks(String playlistUrl) throws Exception {
+		List<String> links = new ArrayList<>();
+		ProcessBuilder pb = new ProcessBuilder(
+				getToolPath("ytdlp"),
+				"--flat-playlist", 
+				"--print", "webpage_url",
+				playlistUrl
+		);
+		Process process = pb.start();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+		String line;
+		while ((line = reader.readLine()) != null) {
+			if (line.startsWith("http")) {
+				links.add(line);
+			}
+		}
+		return links;
 	}
 }

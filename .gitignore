@@ -1,1 +1,12 @@
+# Ignore Executables and Tools
+ffmpeg*
+yt-dlp*
+
+# Ignore Build outputs
 /target/
+*.jar
+
+# Ignore Compressed files
+*.zip
+*.tar.gz
+*.rar

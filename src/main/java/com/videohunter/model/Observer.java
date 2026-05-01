@@ -1,3 +1,4 @@
+package com.videohunter.model;
 
 public interface Observer {
     void onProgressUpdate(String videoId, double percent, String speed);

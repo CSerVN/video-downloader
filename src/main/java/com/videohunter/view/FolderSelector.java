@@ -1,5 +1,7 @@
-import javax.swing.JFileChooser;
+package com.videohunter.view;
 import java.io.File;
+
+import javax.swing.JFileChooser;
 
 public class FolderSelector {
     

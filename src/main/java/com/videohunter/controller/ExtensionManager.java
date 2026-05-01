@@ -1,3 +1,4 @@
+package com.videohunter.controller;
 import java.io.File;
 import java.io.FileWriter;
 
@@ -31,7 +32,7 @@ public class ExtensionManager {
 						+ "    function(details) {\n"
 						+ "        let url = details.url.toLowerCase();\n"
 						+ "        if (url.includes('.m3u8') || url.includes('.mpd')) {\n"
-						+ "            console.log('[Extension] Da tom duoc link: ', url);\n"
+						+ "            console.log('[Extension] Link catched: ', url);\n"
 						+ "            fetch('http://localhost:8765/capture', {\n" 
 						+ "                method: 'POST',\n"
 						+ "                headers: { 'Content-Type': 'application/json' },\n"
