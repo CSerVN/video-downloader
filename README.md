@@ -3,12 +3,19 @@
 A powerful desktop application designed to help you download videos and playlists from various platforms effortlessly.
 
 ## 📖 **[Installation Guide](https://github.com/CSerVN/video-downloader/blob/main/Installation.md)**
-## Launch the application by running:
-  ```bash
-  java -jar VideoDownloader.jar
-  ```
-With Window user, you just need to open **```VideoDownloader.jar```** in your saved directory (after you extracted)
-Eg. C:\Downloads\VideoDownloaderWin-v1.0.0\target
+
+## 🚀 How to Launch
+
+### 🪟 Windows
+Extract the downloaded archive and simply **double-click** ```**run.bat*```.
+
+### 🍎 macOS & 🐧 Linux
+Extract the archive, open your terminal in the extracted folder, and execute:
+	```bash
+	chmod +x run.sh
+	
+	./run.sh
+	```
 
 ## Sit back, relax and enjoy the momment
 
