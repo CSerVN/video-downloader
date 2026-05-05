@@ -17,12 +17,6 @@ public class NeccessaryToolsAdapter implements DownloadStrategy {
 	private String getToolPath(String toolType) {
 		String os = System.getProperty("os.name").toLowerCase();
 		String arch = System.getProperty("os.arch").toLowerCase();
-		
-		String dir = System.getProperty("user.dir");
-		try {
-			File jarPath = new File(NeccessaryToolsAdapter.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-			dir = jarPath.getParent();
-		} catch (Exception ignored) {}
 
 		String fileName = "";
 
@@ -45,21 +39,45 @@ public class NeccessaryToolsAdapter implements DownloadStrategy {
 				else
 					fileName = "ffmpeg-linux-x64";
 			}
+		} else if (toolType.equals("node")) {
+			if (os.contains("win"))
+				fileName = "node.exe";
+			else if (os.contains("mac"))
+				fileName = "node-macos";
+			else
+				fileName = "node-linux";
 		}
-		return dir + File.separator + fileName;
+
+		// Expand search range
+		String projectRoot = System.getProperty("user.dir");
+	    String jarDir = projectRoot;
+
+	    try {
+	        File jarPath = new File(
+	                NeccessaryToolsAdapter.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+	        jarDir = jarPath.getParent();
+	    } catch (Exception ignored) {
+	    }
+
+	    File toolInDevFolder = new File(projectRoot + File.separator + "tools" + File.separator + fileName);
+	    if (toolInDevFolder.exists()) {
+	        return toolInDevFolder.getAbsolutePath();
+	    }
+
+	    File toolInJarDir = new File(jarDir + File.separator + fileName);
+	    if (toolInJarDir.exists()) {
+	        return toolInJarDir.getAbsolutePath();
+	    }
+
+	    return jarDir + File.separator + fileName;
 	}
 
 	@Override
 	public VideoInfo fetchMetadata(String url) throws Exception {
 		String ytDlpCommand = getToolPath("ytdlp");
 
-		ProcessBuilder pb = new ProcessBuilder(
-				ytDlpCommand, 
-				"--extractor-args", "generic:impersonate",
-				"--dump-json", 
-				"--no-warnings",
-				url
-		);
+		ProcessBuilder pb = new ProcessBuilder(ytDlpCommand, "--extractor-args", "generic:impersonate", "--dump-json",
+				"--no-warnings", url);
 		Process process = pb.start();
 
 		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -94,26 +112,24 @@ public class NeccessaryToolsAdapter implements DownloadStrategy {
 			commandList.add("Referer: " + url);
 
 			commandList.add("--ffmpeg-location");
-			File ffmpegFile = new File(getToolPath("ffmpeg"));
-			commandList.add(ffmpegFile.getParent());
-			
+			commandList.add(getToolPath("ffmpeg"));
+
 			commandList.add("-N");
 			commandList.add("16");
 
 			if (format.equalsIgnoreCase("mp4")) {
 				commandList.add("-f");
-				commandList.add("bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best");
+				commandList.add("bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best");
 				commandList.add("--merge-output-format");
-				commandList.add("mp4");
-				
+				commandList.add("mp4/mkv");
 			} else if (format.equalsIgnoreCase("mp3")) {
 				commandList.add("-f");
 				commandList.add("bestaudio/best");
 				commandList.add("-x");
 				commandList.add("--audio-format");
 				commandList.add("mp3");
-				
-			} else { 
+
+			} else {
 				commandList.add("-f");
 				commandList.add("bestvideo+bestaudio/best");
 				commandList.add("--merge-output-format");
@@ -151,10 +167,10 @@ public class NeccessaryToolsAdapter implements DownloadStrategy {
 						o.onProgressUpdate(url, percent, speed);
 					} catch (Exception ignored) {
 					}
-				} else if (line.contains("[Merger]") || line.contains("ffmpeg")) {
-					System.out.print("\r[System] Processing merge... Waiting for minutes.\n");
 				} else if (line.toLowerCase().contains("error") || line.toLowerCase().contains("warning")) {
 					System.err.println("\n[yt-dlp log] " + line);
+				} else if (line.contains("[Merger]")) {
+					System.out.print("\r[System] Processing merge... Waiting for minutes.\n");
 				}
 			}
 
@@ -166,22 +182,17 @@ public class NeccessaryToolsAdapter implements DownloadStrategy {
 			} else {
 				throw new RuntimeException("yt-dlp was crashed (Exit code: " + exitCode + ")");
 			}
-
 		} catch (Exception e) {
 			System.err.println("\nError while downloading: " + e.getMessage());
 			o.onError(url, e.getMessage());
 		}
 	}
-	
+
 	@Override
 	public List<String> extractPlaylistLinks(String playlistUrl) throws Exception {
 		List<String> links = new ArrayList<>();
-		ProcessBuilder pb = new ProcessBuilder(
-				getToolPath("ytdlp"),
-				"--flat-playlist", 
-				"--print", "webpage_url",
-				playlistUrl
-		);
+		ProcessBuilder pb = new ProcessBuilder(getToolPath("ytdlp"), "--flat-playlist", "--print", "webpage_url",
+				playlistUrl);
 		Process process = pb.start();
 		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 		String line;
