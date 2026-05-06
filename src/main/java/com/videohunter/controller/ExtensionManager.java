@@ -29,21 +29,23 @@ public class ExtensionManager {
 				// 2. Create background.js
 				FileWriter bgWriter = new FileWriter(new File(extDir, "background.js"));
 				bgWriter.write("chrome.webRequest.onBeforeRequest.addListener(\n" 
-						+ "    function(details) {\n"
-						+ "        let url = details.url.toLowerCase();\n"
-						+ "        if (url.includes('.m3u8') || url.includes('.mpd')) {\n"
-						+ "            console.log('[Extension] Link catched: ', url);\n"
-						+ "            fetch('http://localhost:8765/capture', {\n" 
-						+ "                method: 'POST',\n"
-						+ "                headers: { 'Content-Type': 'application/json' },\n"
-						+ "                body: JSON.stringify({ url: details.url })\n" 
-						+ "            })\n"
-						+ "            .then(response => { if (response.ok) chrome.tabs.remove(details.tabId); })\n"
-						+ "            .catch(e => console.log('Server is offline'));\n" 
-						+ "        }\n" 
-						+ "    },\n"
-						+ "    { urls: ['<all_urls>'] }\n" 
-						+ ");");
+				        + "    function(details) {\n"
+				        + "        let url = details.url.toLowerCase();\n"
+				        + "        // Filter video/playlist m3u8/mpd\n"
+				        + "        if ((url.includes('.m3u8') || url.includes('.mpd')) && !url.includes('audio') && !url.includes('preview')) {\n"
+				        + "            console.log('🎯 [Extension] Link catched: ', url);\n"
+				        + "            fetch('http://localhost:8765/capture', {\n" 
+				        + "                method: 'POST',\n"
+				        + "                headers: { 'Content-Type': 'application/json' },\n"
+				        + "                body: JSON.stringify({ url: details.url })\n" 
+				        + "            })\n"
+				        + "            .then(response => { if (response.ok) chrome.tabs.remove(details.tabId); })\n"
+				        + "            .catch(e => console.log('Server is offline'));\n" 
+				        + "        }\n" 
+				        + "    },\n"
+				        + "    // Catch domain and come into IFrame's XHR/Media threads\n"
+				        + "    { urls: ['<all_urls>'], types: ['xmlhttprequest', 'media'] }\n" 
+				        + ");");
 				bgWriter.close();
 
 			} catch (Exception e) {

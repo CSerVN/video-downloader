@@ -30,7 +30,7 @@ public class AppGUI extends JFrame {
 		LocalHttpServer server = new LocalHttpServer(manager);
 		server.start();
 
-		setTitle("Video Downloader - v1.0.0");
+		setTitle("Video Downloader - v1.0.1");
 		setSize(700, 450);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLocationRelativeTo(null);

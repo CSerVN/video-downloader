@@ -39,13 +39,6 @@ public class NeccessaryToolsAdapter implements DownloadStrategy {
 				else
 					fileName = "ffmpeg-linux-x64";
 			}
-		} else if (toolType.equals("node")) {
-			if (os.contains("win"))
-				fileName = "node.exe";
-			else if (os.contains("mac"))
-				fileName = "node-macos";
-			else
-				fileName = "node-linux";
 		}
 
 		// Expand search range

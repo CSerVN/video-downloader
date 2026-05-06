@@ -1,5 +1,5 @@
 <assembly xmlns="http://maven.apache.org/ASSEMBLY/2.1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.1 https://maven.apache.org/xsd/assembly-2.1.1.xsd">
-    <id>Linux</id>
+    <id>Mac-AppleSilicon</id>
     <formats><format>tar.gz</format></formats>
     <includeBaseDirectory>false</includeBaseDirectory>
     <files>
@@ -14,20 +14,14 @@
             <directory>${project.basedir}/tools</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
-                <include>yt-dlp</include>
-                <include>*-linux*</include>
+                <include>*-macos</include>
                 <include>run.sh</include>
             </includes>
             <fileMode>0755</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}/tools/jre-linux-x64</directory>
-            <outputDirectory>/jre-linux-x64</outputDirectory>
-            <fileMode>0755</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>${project.basedir}/tools/jre-linux-arm</directory>
-            <outputDirectory>/jre-linux-arm</outputDirectory>
+            <directory>${project.basedir}/tools/jre-mac-arm</directory>
+            <outputDirectory>/jre-mac-arm</outputDirectory>
             <fileMode>0755</fileMode>
         </fileSet>
     </fileSets>
