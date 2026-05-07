@@ -43,26 +43,26 @@ public class NeccessaryToolsAdapter implements DownloadStrategy {
 
 		// Expand search range
 		String projectRoot = System.getProperty("user.dir");
-	    String jarDir = projectRoot;
+		String jarDir = projectRoot;
 
-	    try {
-	        File jarPath = new File(
-	                NeccessaryToolsAdapter.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-	        jarDir = jarPath.getParent();
-	    } catch (Exception ignored) {
-	    }
+		try {
+			File jarPath = new File(
+					NeccessaryToolsAdapter.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+			jarDir = jarPath.getParent();
+		} catch (Exception ignored) {
+		}
 
-	    File toolInDevFolder = new File(projectRoot + File.separator + "tools" + File.separator + fileName);
-	    if (toolInDevFolder.exists()) {
-	        return toolInDevFolder.getAbsolutePath();
-	    }
+		File toolInDevFolder = new File(projectRoot + File.separator + "tools" + File.separator + fileName);
+		if (toolInDevFolder.exists()) {
+			return toolInDevFolder.getAbsolutePath();
+		}
 
-	    File toolInJarDir = new File(jarDir + File.separator + fileName);
-	    if (toolInJarDir.exists()) {
-	        return toolInJarDir.getAbsolutePath();
-	    }
+		File toolInJarDir = new File(jarDir + File.separator + fileName);
+		if (toolInJarDir.exists()) {
+			return toolInJarDir.getAbsolutePath();
+		}
 
-	    return jarDir + File.separator + fileName;
+		return jarDir + File.separator + fileName;
 	}
 
 	@Override
@@ -125,7 +125,7 @@ public class NeccessaryToolsAdapter implements DownloadStrategy {
 			} else {
 				commandList.add("-f");
 				commandList.add("bestvideo+bestaudio/best");
-				commandList.add("--merge-output-format");
+				commandList.add("--remux-video");
 				commandList.add("mkv");
 			}
 

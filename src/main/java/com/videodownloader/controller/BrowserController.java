@@ -1,4 +1,5 @@
 package com.videodownloader.controller;
+
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
@@ -72,14 +73,9 @@ public class BrowserController {
 		try {
 			String targetUrl = url.isEmpty() ? "https://www.google.com" : url;
 			System.out.println("Deploying Auto-Capture Browser to: " + targetUrl);
-			
-			ProcessBuilder pb = getChromiumProcess(
-					"--user-data-dir=" + PROFILE_PATH, 
-					"--load-extension=" + extPath,
-					"--no-first-run",             
-					"--no-default-browser-check", 
-					targetUrl                           
-			);
+
+			ProcessBuilder pb = getChromiumProcess("--user-data-dir=" + PROFILE_PATH, "--load-extension=" + extPath,
+					"--no-first-run", "--no-default-browser-check", targetUrl);
 			pb.start();
 		} catch (Exception e) {
 			System.err.println("Error: Couldn't call to browser " + e.getMessage());
