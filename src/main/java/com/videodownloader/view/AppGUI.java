@@ -9,10 +9,23 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
 import com.videodownloader.controller.BrowserController;
@@ -26,15 +39,17 @@ public class AppGUI extends JFrame {
 	private JTable queueTable;
 	private JTextArea consoleLog;
 	private JButton btnDownloadSelected;
-	private JProgressBar progressBar;
 
 	private final DownloadManager manager;
+
+	private int hoveredRow = -1;
+	private int hoveredCol = -1;
 
 	public AppGUI(DownloadManager manager) {
 		this.manager = manager;
 
 		setTitle("Video Downloader - v1.0.2");
-		setSize(850, 600);
+		setSize(950, 600);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLocationRelativeTo(null);
 		setLayout(new BorderLayout(10, 10));
@@ -61,7 +76,7 @@ public class AppGUI extends JFrame {
 		JPanel queuePanel = new JPanel(new BorderLayout());
 		queuePanel.setBorder(BorderFactory.createTitledBorder("Download Queue"));
 
-		String[] columns = { "Ord No.", "Link video/playlist", "Format", "Status", "Progress" };
+		String[] columns = { "Ord No.", "Link video/playlist", "Format", "Status", "Progress", " " };
 		tableModel = new DefaultTableModel(columns, 0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
@@ -69,11 +84,87 @@ public class AppGUI extends JFrame {
 			}
 		};
 		queueTable = new JTable(tableModel);
-		queueTable.getColumnModel().getColumn(0).setPreferredWidth(65);
-		queueTable.getColumnModel().getColumn(0).setMaxWidth(50);
-		queueTable.getColumnModel().getColumn(2).setPreferredWidth(80);
-		queueTable.getColumnModel().getColumn(2).setMaxWidth(100);
-		queueTable.setRowHeight(25);
+
+		queueTable.getColumnModel().getColumn(0).setPreferredWidth(45);
+		queueTable.getColumnModel().getColumn(0).setMaxWidth(45);
+		queueTable.getColumnModel().getColumn(2).setPreferredWidth(70);
+		queueTable.getColumnModel().getColumn(2).setMaxWidth(70);
+		queueTable.getColumnModel().getColumn(3).setPreferredWidth(100);
+		queueTable.getColumnModel().getColumn(3).setMaxWidth(120);
+		ProgressRenderer progressRenderer = new ProgressRenderer();
+		queueTable.getColumnModel().getColumn(4).setCellRenderer(progressRenderer);
+
+		queueTable.getColumnModel().getColumn(5).setPreferredWidth(35);
+		queueTable.getColumnModel().getColumn(5).setMaxWidth(35);
+		RemoveButtonRenderer removeBtnRenderer = new RemoveButtonRenderer();
+		queueTable.getColumnModel().getColumn(5).setCellRenderer(removeBtnRenderer);
+
+		queueTable.addMouseMotionListener(new MouseMotionAdapter() {
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				int row = queueTable.rowAtPoint(e.getPoint());
+				int col = queueTable.columnAtPoint(e.getPoint());
+
+				if (row != hoveredRow || col != hoveredCol) {
+					int oldRow = hoveredRow;
+					int oldCol = hoveredCol;
+
+					hoveredRow = row;
+					hoveredCol = col;
+
+					removeBtnRenderer.updateHoverState(row, col);
+
+					if (oldRow >= 0 && oldCol == 5) {
+						queueTable.repaint(queueTable.getCellRect(oldRow, oldCol, false));
+					}
+					if (hoveredRow >= 0 && hoveredCol == 5) {
+						queueTable.repaint(queueTable.getCellRect(hoveredRow, hoveredCol, false));
+					}
+				}
+			}
+		});
+
+		queueTable.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseExited(MouseEvent e) {
+				int oldRow = hoveredRow;
+				int oldCol = hoveredCol;
+
+				hoveredRow = -1;
+				hoveredCol = -1;
+				removeBtnRenderer.updateHoverState(-1, -1);
+
+				if (oldRow >= 0 && oldCol == 5) {
+					queueTable.repaint(queueTable.getCellRect(oldRow, oldCol, false));
+				}
+			}
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int column = queueTable.columnAtPoint(e.getPoint());
+				int row = queueTable.rowAtPoint(e.getPoint());
+
+				if (row < queueTable.getRowCount() && row >= 0 && column == 5) {
+					String status = tableModel.getValueAt(row, 3).toString();
+					if (status.equals("Downloading...")) {
+						logToConsole("=> [System] Cannot remove an active download!");
+						return;
+					}
+
+					manager.removePendingTask(row);
+					tableModel.removeRow(row);
+
+					for (int i = 0; i < tableModel.getRowCount(); i++) {
+						tableModel.setValueAt(i + 1, i, 0);
+					}
+					logToConsole("=> [System] Removed item from queue.");
+
+					hoveredRow = -1;
+					hoveredCol = -1;
+					removeBtnRenderer.updateHoverState(-1, -1);
+				}
+			}
+		});
 
 		JScrollPane tableScroll = new JScrollPane(queueTable);
 		queuePanel.add(tableScroll, BorderLayout.CENTER);
@@ -92,12 +183,8 @@ public class AppGUI extends JFrame {
 
 		JPanel actionPanel = new JPanel(new BorderLayout(0, 5));
 		btnDownloadSelected = new JButton("Download Selected");
-		progressBar = new JProgressBar(0, 100);
-		progressBar.setStringPainted(true);
-		progressBar.setValue(0);
 
 		actionPanel.add(btnDownloadSelected, BorderLayout.NORTH);
-		actionPanel.add(progressBar, BorderLayout.SOUTH);
 
 		bottomContainer.add(consolePanel, BorderLayout.CENTER);
 		bottomContainer.add(actionPanel, BorderLayout.SOUTH);
@@ -117,33 +204,6 @@ public class AppGUI extends JFrame {
 			}
 		});
 
-		// Clipboard button event
-		btnClipboard.addActionListener(e -> {
-			try {
-				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-				if (clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
-					String data = (String) clipboard.getData(DataFlavor.stringFlavor);
-
-					if (data != null) {
-						Matcher m = Pattern.compile("(?i)https?://\\S+").matcher(data);
-
-						if (m.find()) {
-							String url = m.group();
-							logToConsole("=> [Clipboard] Manual catch: " + url);
-							manager.processLink(url);
-						} else {
-							logToConsole("=> [Clipboard] No valid link found in clipboard.");
-						}
-					}
-				} else {
-					logToConsole("=> [Clipboard] Clipboard is empty or not text.");
-				}
-			} catch (Exception ex) {
-				logToConsole("=> [Error] Cannot access clipboard: " + ex.getMessage());
-			}
-		});
-
-		// Download Selected event
 		btnDownloadSelected.addActionListener(e -> {
 			int[] selectedRows = queueTable.getSelectedRows();
 			if (selectedRows.length == 0) {
@@ -160,7 +220,6 @@ public class AppGUI extends JFrame {
 			queueTable.clearSelection();
 		});
 
-		// Import API event
 		btnImportApi.addActionListener(e -> {
 			JTextArea jsonArea = new JTextArea(15, 60);
 			jsonArea.setLineWrap(true);
@@ -178,6 +237,33 @@ public class AppGUI extends JFrame {
 			}
 		});
 
+		btnClipboard.addActionListener(e -> {
+			try {
+				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+				if (clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
+					String data = (String) clipboard.getData(java.awt.datatransfer.DataFlavor.stringFlavor);
+					if (data != null && !data.trim().isEmpty()) {
+						Matcher m = Pattern.compile("(?i)https?://[^\\s]+").matcher(data);
+						boolean found = false;
+						while (m.find()) {
+							found = true;
+							String url = m.group();
+							logToConsole("=> [Clipboard] Manual catch: " + url);
+							manager.processLink(url);
+						}
+
+						if (!found) {
+							String preview = data.length() > 30 ? data.substring(0, 30) + "..." : data;
+							logToConsole("=> [Clipboard] No valid link found. Copied text was: '" + preview + "'");
+						}
+					} else {
+						logToConsole("=> [Clipboard] Clipboard is empty.");
+					}
+				}
+			} catch (Exception ex) {
+				logToConsole("=> [Error] Cannot access clipboard: " + ex.getMessage());
+			}
+		});
 	}
 
 	private void startHunting() {
@@ -211,7 +297,7 @@ public class AppGUI extends JFrame {
 
 	public int addQueueItem(String url, String format, String status) {
 		int stt = tableModel.getRowCount() + 1;
-		tableModel.addRow(new Object[] { stt, url, format, status, "0%" });
+		tableModel.addRow(new Object[] { stt, url, format, status, "0%", "" });
 		return tableModel.getRowCount() - 1;
 	}
 
@@ -227,4 +313,5 @@ public class AppGUI extends JFrame {
 	public int getRowCount() {
 		return tableModel.getRowCount();
 	}
+
 }

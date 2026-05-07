@@ -3,6 +3,7 @@ package com.videodownloader.controller;
 import java.awt.Toolkit;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -29,6 +30,9 @@ public class DownloadManager implements Observer {
 	private final BlockingQueue<DownloadTask> downloadQueue = new LinkedBlockingQueue<>();
 	private final Thread queueWorker;
 
+	// Spam avoid
+	private final Set<String> analyzingUrls = ConcurrentHashMap.newKeySet();
+
 	public DownloadManager() {
 		this.queueWorker = new Thread(this::processQueue);
 		queueWorker.setDaemon(true);
@@ -52,6 +56,24 @@ public class DownloadManager implements Observer {
 				Thread.currentThread().interrupt();
 			}
 		}
+	}
+
+	public void removePendingTask(int rowIndex) {
+		pendingTasks.remove(rowIndex);
+		Map<Integer, DownloadTask> updatedMap = new ConcurrentHashMap<>();
+		for (Map.Entry<Integer, DownloadTask> entry : pendingTasks.entrySet()) {
+			int oldIndex = entry.getKey();
+			DownloadTask task = entry.getValue();
+			if (oldIndex > rowIndex) {
+				int newIndex = oldIndex - 1;
+				task.rowIndex = newIndex;
+				updatedMap.put(newIndex, task);
+			} else {
+				updatedMap.put(oldIndex, task);
+			}
+		}
+		pendingTasks.clear();
+		pendingTasks.putAll(updatedMap);
 	}
 
 	private void processQueue() {
@@ -85,7 +107,6 @@ public class DownloadManager implements Observer {
 
 	@Override
 	public void onProgressUpdate(String videoId, double percent, String speed) {
-		// Log Console
 		int width = 50;
 		int progress = (int) (percent / 100 * width);
 
@@ -102,9 +123,7 @@ public class DownloadManager implements Observer {
 		String output = String.format("\r%s] %.1f%% | speed: %s", bar.toString(), percent, speed);
 		System.out.print(output);
 
-		// Update GUI
 		if (gui != null && currentRowIndex != -1) {
-			// Format %
 			String progressStr = String.format("%.1f%%", percent);
 			if (speed != null && !speed.trim().isEmpty() && !speed.equals("N/A")) {
 				progressStr += " (" + speed + ")";
@@ -168,7 +187,12 @@ public class DownloadManager implements Observer {
 	}
 
 	public void processLink(String url) {
+		if (!analyzingUrls.add(url)) {
+			return;
+		}
+
 		new Thread(() -> {
+			boolean isDialogOpened = false;
 			try {
 				System.out.println("\n[Analyzing link] " + url);
 				List<String> links = strategy.extractPlaylistLinks(url);
@@ -181,31 +205,44 @@ public class DownloadManager implements Observer {
 				String displayTitle = (links.size() > 1) ? "Playlist (" + links.size() + " videos): " + info.getTitle()
 						: info.getTitle();
 
+				isDialogOpened = true;
 				SwingUtilities.invokeLater(() -> {
-					String savePath = FolderSelector.chooseSaveDirectory();
-					if (savePath == null || savePath.isEmpty())
-						return;
+					try {
+						String savePath = FolderSelector.chooseSaveDirectory();
+						if (savePath == null || savePath.isEmpty())
+							return;
 
-					String[] options = { "1. MP4 - Popular video formatter (Default)", "MP3 - Just audio",
-							"WebM/MKV - Original quality" };
-					int choice = JOptionPane.showOptionDialog(null, "Choose download format for:\n" + displayTitle,
-							"video/playlist", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options,
-							options[0]);
+						String[] options = { "1. MP4 - Popular video formatter (Default)", "MP3 - Just audio",
+								"WebM/MKV - Original quality" };
+						int choice = JOptionPane.showOptionDialog(null, "Choose download format for:\n" + displayTitle,
+								"video/playlist", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+								options, options[0]);
 
-					String format = (choice == 1) ? "mp3" : (choice == 2 ? "webm/mkv" : "mp4");
+						if (choice == JOptionPane.CLOSED_OPTION)
+							return;
 
-					for (String link : links) {
-						int newRow = (gui != null) ? gui.addQueueItem(link, format.toUpperCase(), "Waiting...") : -1;
-						if (newRow != -1) {
-							pendingTasks.put(newRow, new DownloadTask(link, savePath, format, newRow));
+						String format = (choice == 1) ? "mp3" : (choice == 2 ? "webm/mkv" : "mp4");
+
+						for (String link : links) {
+							int newRow = (gui != null) ? gui.addQueueItem(link, format.toUpperCase(), "Waiting...")
+									: -1;
+							if (newRow != -1) {
+								pendingTasks.put(newRow, new DownloadTask(link, savePath, format, newRow));
+							}
 						}
+						if (gui != null)
+							gui.logToConsole("=> [System] Added " + links.size() + " items to waitlist.");
+					} finally {
+						analyzingUrls.remove(url);
 					}
-					if (gui != null)
-						gui.logToConsole("=> [System] Added " + links.size() + " items to waitlist.");
 				});
 
 			} catch (Exception e) {
 				System.err.println("Analytics error! Error: " + e.getMessage());
+			} finally {
+				if (!isDialogOpened) {
+					analyzingUrls.remove(url);
+				}
 			}
 		}).start();
 	}

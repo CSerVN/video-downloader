@@ -8,6 +8,7 @@ import com.videodownloader.controller.DependencyManager;
 import com.videodownloader.controller.DownloadManager;
 import com.videodownloader.controller.LocalHttpServer;
 import com.videodownloader.controller.NeccessaryToolsAdapter;
+import com.videodownloader.controller.UpdateChecker;
 import com.videodownloader.view.AppGUI;
 
 public class Program {
@@ -18,6 +19,8 @@ public class Program {
 		}
 
 		DependencyManager.checkAndDownloadDependencies();
+
+		UpdateChecker.checkForUpdates();
 
 		SwingUtilities.invokeLater(() -> {
 			DownloadManager manager = new DownloadManager();
