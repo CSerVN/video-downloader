@@ -34,7 +34,7 @@
 						<configuration>
 							<archive>
 								<manifest>
-									<mainClass>com.videohunter.Program</mainClass>
+									<mainClass>com.videodownloader.Program</mainClass>
 								</manifest>
 							</archive>
 							<descriptorRefs>
@@ -50,7 +50,7 @@
 							<goal>single</goal>
 						</goals>
 						<configuration>
-							<finalName>VideoDownloader-v1.0.1</finalName>
+							<finalName>VideoDownloader-v1.0.2</finalName>
 							<appendAssemblyId>true</appendAssemblyId>
 							<descriptors>
 								<descriptor>src/assembly/win.xml</descriptor>

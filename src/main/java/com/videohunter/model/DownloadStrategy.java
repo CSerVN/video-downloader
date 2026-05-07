@@ -1,9 +1,0 @@
-package com.videohunter.model;
-
-import java.util.List;
-
-public interface DownloadStrategy {
-    VideoInfo fetchMetadata(String url) throws Exception;
-    public void startDownload(String url, String savePath, String format, Observer observer);
-    List<String> extractPlaylistLinks(String playlistUrl) throws Exception;
-}
