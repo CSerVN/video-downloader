@@ -6,16 +6,16 @@ A powerful desktop application designed to help you download videos and playlist
 
 ## 🚀 How to Launch
 
-### 🪟 Windows
+### Windows
 Extract the downloaded archive and simply **double-click** ```**run.bat*```.
 
-### 🍎 macOS & 🐧 Linux
+### MacOS & Linux
 Extract the archive, open your terminal in the extracted folder, and execute:
 	```bash
+	
 	chmod +x run.sh
 	
 	./run.sh
-	```
 
 ## Sit back, relax and enjoy the momment
 
