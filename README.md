@@ -11,10 +11,11 @@ Extract the downloaded archive and simply **double-click** ```**run.bat*``` in y
 
 ### MacOS & Linux
 Extract the archive, open your terminal in the extracted folder, and execute:
-	```bash
-	
-	chmod +x run.sh
-	./run.sh
+
+```bash
+chmod +x run.sh
+./run.sh
+```
 ## Sit back, relax and enjoy the moment
 
 ## ✨ Key Features
